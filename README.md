@@ -56,13 +56,17 @@ app.use(tableHistory, { name: "userAuditLog" });
 export default app;
 ```
 
+To add history to multiple tables, you can call `app.use` multiple times with
+different names. They will be available in your app as
+`new TableHistory(components.<name>, ...)`.
+
 ## Usage
 
 ```ts
 import { components } from "./_generated/api";
 import { TableHistory } from "@convex-dev/table-history";
 
-const userAuditLog = new TableHistory(components.userAuditLog, {
+const userAuditLog = new TableHistory<DataModel, "users">(components.userAuditLog, {
   serializability: "wallclock",
 });
 ```
@@ -120,11 +124,14 @@ You can configure the serializability of the history table by setting the
 
 ### `currentTs` and `maxTs` are required
 
-Generate a `currentTs` that is stable and recent. Use it for
-all pages of a `usePaginatedQuery` call, by passing it up from the client.
+- For `listSnapshot`, `currentTs` should be a stable recent timestamp.
+  - If the timestamp isn't recent, the queries might read too much data in
+    a single page and throw an error.
+- For `listHistory` and `listDocumentHistory`, `maxTs` should be stable but
+  doesn't need to be recent.
 
 ```ts
-const [currentTs] = useState(Date.now());
+const [currentTs] = useState(Date.now()); // stable and recent
 const [yesterday] = useState(Date.now() - 24 * 60 * 60 * 1000);
 const usersYesterday = usePaginatedQuery(
   api.users.listSnapshot,
@@ -152,14 +159,6 @@ the TableHistory component assumes its own data model is append-only (which is
 true, except when vacuuming), and takes in a stable recent timestamp. Then it
 only looks at history entries from before that timestamp.
 
-Requirements:
-
-- For `listSnapshot`, `currentTs` should be a stable recent timestamp.
-  - If the timestamp isn't recent, the queries might read too much data in
-    a single page and throw an error.
-- For `listHistory` and `listDocumentHistory`, `maxTs` should be stable but
-  doesn't need to be recent.
-
 ### Vacuuming
 
 The history table can grow large, so you can use the `vacuumHistory` function
@@ -167,5 +166,14 @@ to remove old history entries. This function will
 schedule background jobs to delete old history entries.
 The entries which will be deleted are those which are not visible
 at snapshots `>=minTsToKeep`.
+
+### Limitations
+
+- No attribution: there is no way to add attribution to a history entry, e.g. which `ctx.auth`
+  made the change.
+  - Workaround: you can add attribution to the document itself.
+- No indexes: you can't use an index to change the sort order or get a subset of results.
+  - Workaround: you can paginate until `isDone` returns true, and sort or filter
+    the results yourself, either on the client or in an action.
 
 <!-- END: Include on https://convex.dev/components -->
