@@ -46,7 +46,13 @@ export type Mounts = {
       {
         continueCursor: string;
         isDone: boolean;
-        page: Array<{ doc: any; id: string; isDeleted: boolean; ts: number }>;
+        page: Array<{
+          attribution: any;
+          doc: any;
+          id: string;
+          isDeleted: boolean;
+          ts: number;
+        }>;
       }
     >;
     listHistory: FunctionReference<
@@ -66,7 +72,13 @@ export type Mounts = {
       {
         continueCursor: string;
         isDone: boolean;
-        page: Array<{ doc: any; id: string; isDeleted: boolean; ts: number }>;
+        page: Array<{
+          attribution: any;
+          doc: any;
+          id: string;
+          isDeleted: boolean;
+          ts: number;
+        }>;
       }
     >;
     listSnapshot: FunctionReference<
@@ -87,13 +99,22 @@ export type Mounts = {
       {
         continueCursor: string;
         isDone: boolean;
-        page: Array<{ doc: any; id: string; isDeleted: boolean; ts: number }>;
+        page: Array<{
+          attribution: any;
+          doc: any;
+          id: string;
+          isDeleted: boolean;
+          ts: number;
+        }>;
+        pageStatus?: "SplitRecommended";
+        splitCursor?: string;
       }
     >;
     update: FunctionReference<
       "mutation",
       "public",
       {
+        attribution: any;
         doc: any | null;
         id: string;
         serializability: "table" | "document" | "wallclock";

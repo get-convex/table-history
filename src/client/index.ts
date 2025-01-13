@@ -13,25 +13,38 @@ import { api } from "../component/_generated/api";
 import type { Serializability } from "../component/lib";
 
 export class TableHistory<DataModel extends GenericDataModel, TableName extends TableNamesInDataModel<DataModel>> {
+  public options: {
+    serializability: Serializability;
+  };
   constructor(
     public component: UseApi<typeof api>,
-    public options: {
-      serializability: Serializability;
+    options?: {
+      serializability?: Serializability;
     }
-  ) {}
+  ) {
+    this.options = {
+      serializability: options?.serializability ?? "wallclock",
+    };
+  }
 
   /**
    * Write a new history entry.
+   * 
+   * @argument attribution an arbitrary object that will be stored with the
+   *   history entry. Attribution can include actor/user identity, reason for
+   *   change, etc.
    */
   async update(
     ctx: RunMutationCtx,
     id: GenericId<TableName>,
-    doc: DocumentByName<DataModel, TableName> | null
+    doc: DocumentByName<DataModel, TableName> | null,
+    attribution: unknown = null,
   ) {
     return ctx.runMutation(this.component.lib.update, {
       id,
       doc,
       serializability: this.options.serializability,
+      attribution,
     });
   }
 
@@ -81,7 +94,13 @@ export class TableHistory<DataModel extends GenericDataModel, TableName extends 
    */
   trigger<Ctx extends RunMutationCtx>(): Trigger<Ctx, DataModel, TableName> {
     return async (ctx, change) => {
-      await this.update(ctx, change.id, change.newDoc);
+      let attribution: unknown = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((ctx as any).auth && typeof (ctx as any).auth.getUserIdentity === "function") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        attribution = await (ctx as any).auth.getUserIdentity();
+      }
+      await this.update(ctx, change.id, change.newDoc, attribution);
     };
   }
 }

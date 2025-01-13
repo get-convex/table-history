@@ -18,6 +18,7 @@ export const serializabilityValidator = v.union(
   /// "wallclock" serializability means the timestamp is set to the current time
   /// according to the server's clock. This provides no guarantees, but it's
   /// usually in causal order and causes no OCC conflicts.
+  /// Wallclock serializability is the default.
   v.literal("wallclock"),
 );
 export type Serializability = Infer<typeof serializabilityValidator>;
@@ -27,6 +28,7 @@ export const historyEntryValidator = v.object({
   doc: v.any(),
   ts: v.number(),
   isDeleted: v.boolean(),
+  attribution: v.any(),
 });
 export type HistoryEntry = Infer<typeof historyEntryValidator>;
 
@@ -63,6 +65,7 @@ export const update = mutation({
     id: v.string(),
     doc: v.union(v.any(), v.null()),
     serializability: serializabilityValidator,
+    attribution: v.any(),
   },
   returns: v.number(),
   handler: async (ctx, args) => {
@@ -76,6 +79,7 @@ export const update = mutation({
       doc: args.doc,
       ts,
       isDeleted: args.doc === null,
+      attribution: args.attribution,
     });
     return ts;
   },
@@ -110,6 +114,7 @@ function extractHistoryEntry(h: Doc<"history">): HistoryEntry {
     doc: h.doc,
     ts: h.ts,
     isDeleted: h.isDeleted,
+    attribution: h.attribution,
   };
 }
 
@@ -137,6 +142,7 @@ export const listDocumentHistory = query({
   },
 });
 
+// Sentinel value for end of cursor.
 const END_CURSOR = "END_CURSOR";
 
 export const listSnapshot = query({
@@ -149,6 +155,8 @@ export const listSnapshot = query({
     continueCursor: v.string(),
     isDone: v.boolean(),
     page: v.array(historyEntryValidator),
+    splitCursor: v.optional(v.string()),
+    pageStatus: v.optional(v.literal("SplitRecommended")),
   }),
   handler: async (ctx, args) => {
     const pageSize = args.paginationOpts.numItems;
@@ -163,14 +171,18 @@ export const listSnapshot = query({
     if (pageSize <= 0) {
       throw new Error("pageSize must be positive");
     }
+    if (args.currentTs < args.snapshotTs) {
+      throw new Error("currentTs must be >= snapshotTs");
+    }
     const vacuumed = await ctx.db.query("vacuumed").first();
     if (vacuumed && vacuumed.minTsToKeep > args.snapshotTs) {
       throw new Error("invalid snapshotTs, snapshot has been vacuumed");
     }
-    let endCursor: string;
+    const targetEndCursor = args.paginationOpts.endCursor ?? null;
     let prevId = args.paginationOpts.cursor;
-    let countIdsBeforeCurrentTs = 0;
-    while (countIdsBeforeCurrentTs < pageSize) {
+    const allIdsSeen: string[] = [];
+    const allIdsBeforeCurrentTs: string[] = [];
+    while (allIdsBeforeCurrentTs.length < pageSize || targetEndCursor !== null) {
       const itemWithNextId = await ctx.db.query("history").withIndex("id", (q) =>
         prevId !== null ? q.lt("id", prevId) : q
       ).order("desc").first();
@@ -179,14 +191,26 @@ export const listSnapshot = query({
           continueCursor: END_CURSOR,
           isDone: true,
           page,
+          ...maybeSplit(allIdsSeen, pageSize),
         };
       }
+      allIdsSeen.push(itemWithNextId.id);
       prevId = itemWithNextId.id;
+      if (targetEndCursor !== null && targetEndCursor !== END_CURSOR && itemWithNextId.id < targetEndCursor) {
+        // We've reached the end of the page.
+        return {
+          continueCursor: targetEndCursor,
+          isDone: targetEndCursor === END_CURSOR,
+          page,
+          ...maybeSplit(allIdsSeen, pageSize),
+        };
+      }
       let revision: Doc<"history"> | null = itemWithNextId;
       if (itemWithNextId.ts > args.snapshotTs) {
         // Find the revision as it existed at args.ts
         const itemAtSnapshotTs = await ctx.db.query("history").withIndex("id", (q) => q.eq("id", itemWithNextId.id).lte("ts", args.snapshotTs)).order("desc").first();
         if (itemAtSnapshotTs === null) {
+          // The item doesn't exist in the snapshotTs snapshot.
           // Check if it exists as of currentTs
           const itemAtCurrentTs = await ctx.db.query("history").withIndex("id", (q) => q.eq("id", itemWithNextId.id).lte("ts", args.currentTs)).order("desc").first();
           if (itemAtCurrentTs === null) {
@@ -205,19 +229,32 @@ export const listSnapshot = query({
         // If it's deleted, we don't want to include it in the page, but it counts toward the limit and can be in the cursor.
         revision = null;
       }
-      endCursor = itemWithNextId.id;
-      countIdsBeforeCurrentTs++;
+      allIdsBeforeCurrentTs.push(itemWithNextId.id);
       if (revision) {
         page.push(extractHistoryEntry(revision));
       }
     }
     return {
-      continueCursor: endCursor!,
+      continueCursor: allIdsBeforeCurrentTs[allIdsBeforeCurrentTs.length - 1],
       isDone: false,
       page,
+      ...maybeSplit(allIdsSeen, pageSize),
     };
   },
 });
+
+function maybeSplit(allIdsSeen: string[], pageSize: number): {
+  splitCursor?: string;
+  pageStatus?: "SplitRecommended";
+} {
+  if (allIdsSeen.length >= pageSize * 2) {
+    return {
+      splitCursor: allIdsSeen[pageSize-1],
+      pageStatus: "SplitRecommended",
+    };
+  }
+  return {};
+}
 
 /**
  * Deletes history of state that was gone (overwritten or deleted) before

@@ -10,7 +10,7 @@
     "lint": "tsc -p convex && eslint convex"
   },
   "dependencies": {
-    "@convex-dev/table-history": "file:..",
+    "convex-table-history": "file:..",
     "convex": "file:../node_modules/convex",
     "convex-helpers": "^0.1.67",
     "react": "^18.3.1",

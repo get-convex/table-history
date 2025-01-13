@@ -1,6 +1,6 @@
 import { query, mutation as rawMutation } from "./_generated/server";
 import { components } from "./_generated/api";
-import { TableHistory } from "@convex-dev/table-history";
+import { TableHistory } from "convex-table-history";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { Triggers } from "convex-helpers/server/triggers";

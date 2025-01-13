@@ -7,6 +7,7 @@ export default defineSchema({
     ts: v.number(),
     doc: v.union(v.any(), v.null()),
     isDeleted: v.boolean(),
+    attribution: v.any(),
   })
     .index("ts", ["ts"])
     .index("id", ["id", "ts"]),
