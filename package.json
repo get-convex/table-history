@@ -1,11 +1,11 @@
 {
-  "name": "table-history",
-  "description": "A counter component for Convex.",
-  "repository": "github:get-convex/counter",
-  "homepage": "https://github.com/get-convex/counter#readme",
+  "name": "convex-table-history",
+  "description": "A table history component for Convex.",
+  "repository": "github:ldanilek/table-history",
+  "homepage": "https://github.com/ldanilek/table-history#readme",
   "bugs": {
     "email": "support@convex.dev",
-    "url": "https://github.com/get-convex/counter/issues"
+    "url": "https://github.com/ldanilek/table-history/issues"
   },
   "version": "0.1.1",
   "license": "Apache-2.0",
