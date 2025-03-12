@@ -79,7 +79,7 @@ async function patchDocument(ctx: MutationCtx, documentId: Id<"documents">, patc
 }
 ```
 
-Or attach a [trigger](https://docs.convex.dev/triggers) to automatically write to the history table when a mutation changes a document:
+Or attach a [trigger](https://www.npmjs.com/package/convex-helpers#triggers) to automatically write to the history table when a mutation changes a document:
 
 ```ts
 const triggers = new Triggers<DataModel>();
