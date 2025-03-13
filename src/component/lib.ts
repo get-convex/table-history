@@ -94,6 +94,7 @@ function paginationResultValidator<T>(itemValidator: Validator<T, "required", st
     splitCursor: v.optional(v.union(v.null(), v.string())),
   });
 }
+export type PaginationResult<T> = Infer<ReturnType<typeof paginationResultValidator<T>>>;
 
 export const listHistory = query({
   args: {
