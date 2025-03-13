@@ -231,7 +231,7 @@ export const listSnapshot = query({
         page.push(extractHistoryEntry(revision));
       }
     }
-    const output: Infer<ReturnType<typeof paginationResultValidator<HistoryEntry>>> = {
+    const output: PaginationResult<HistoryEntry> = {
       continueCursor: allIdsBeforeCurrentTs[allIdsBeforeCurrentTs.length - 1],
       isDone: false,
       page,
