@@ -77,6 +77,17 @@ async function patchDocument(ctx: MutationCtx, documentId: Id<"documents">, patc
   const document = await ctx.db.get(documentId);
   await documentAuditLog.update(ctx, documentId, document);
 }
+
+async function insertDocument(ctx: MutationCtx, documentId: Id<"documents">, newDoc: WithoutSystemFields<Doc<"documents">>) {
+  const documentId = await ctx.db.insert("documents", newDoc);
+  const document = await ctx.db.get(documentId);
+  await documentAuditLog.update(ctx, documentId, document);
+}
+
+async function deleteDocument(ctx: MutationCtx, documentId: Id<"documents">) {
+  await ctx.db.delete(documentId);
+  await documentAuditLog.update(ctx, documentId, null);
+}
 ```
 
 Or attach a [trigger](https://www.npmjs.com/package/convex-helpers#triggers) to automatically write to the history table when a mutation changes a document:
