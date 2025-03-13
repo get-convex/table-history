@@ -65,6 +65,8 @@ export declare const components: {
             isDeleted: boolean;
             ts: number;
           }>;
+          pageStatus?: null | "SplitRequired" | "SplitRecommended";
+          splitCursor?: null | string;
         }
       >;
       listHistory: FunctionReference<
@@ -91,6 +93,8 @@ export declare const components: {
             isDeleted: boolean;
             ts: number;
           }>;
+          pageStatus?: null | "SplitRequired" | "SplitRecommended";
+          splitCursor?: null | string;
         }
       >;
       listSnapshot: FunctionReference<
@@ -118,8 +122,8 @@ export declare const components: {
             isDeleted: boolean;
             ts: number;
           }>;
-          pageStatus?: "SplitRecommended";
-          splitCursor?: string;
+          pageStatus?: null | "SplitRequired" | "SplitRecommended";
+          splitCursor?: null | string;
         }
       >;
       update: FunctionReference<
