@@ -1,4 +1,4 @@
-import { v, Infer } from "convex/values";
+import { v, Infer, Validator } from "convex/values";
 import { internalMutation, mutation, query, QueryCtx } from "./_generated/server";
 import { paginator } from "convex-helpers/server/pagination";
 import schema from "./schema.js";
@@ -85,16 +85,23 @@ export const update = mutation({
   },
 });
 
+function paginationResultValidator<T>(itemValidator: Validator<T, "required", string>) {
+  return v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(itemValidator),
+    pageStatus: v.optional(v.union(v.null(), v.literal("SplitRequired"), v.literal("SplitRecommended"))),
+    splitCursor: v.optional(v.union(v.null(), v.string())),
+  });
+}
+export type PaginationResult<T> = Infer<ReturnType<typeof paginationResultValidator<T>>>;
+
 export const listHistory = query({
   args: {
     maxTs: v.number(),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    continueCursor: v.string(),
-    isDone: v.boolean(),
-    page: v.array(historyEntryValidator),
-  }),
+  returns: paginationResultValidator(historyEntryValidator),
   handler: async (ctx, args) => {
     const results = await paginator(ctx.db, schema)
       .query("history")
@@ -124,11 +131,7 @@ export const listDocumentHistory = query({
     maxTs: v.number(),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    continueCursor: v.string(),
-    isDone: v.boolean(),
-    page: v.array(historyEntryValidator),
-  }),
+  returns: paginationResultValidator(historyEntryValidator),
   handler: async (ctx, args) => {
     const results = await paginator(ctx.db, schema)
       .query("history")
@@ -151,13 +154,7 @@ export const listSnapshot = query({
     currentTs: v.number(),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    continueCursor: v.string(),
-    isDone: v.boolean(),
-    page: v.array(historyEntryValidator),
-    splitCursor: v.optional(v.string()),
-    pageStatus: v.optional(v.literal("SplitRecommended")),
-  }),
+  returns: paginationResultValidator(historyEntryValidator),
   handler: async (ctx, args) => {
     const pageSize = args.paginationOpts.numItems;
     const page: HistoryEntry[] = [];
@@ -234,12 +231,13 @@ export const listSnapshot = query({
         page.push(extractHistoryEntry(revision));
       }
     }
-    return {
+    const output: PaginationResult<HistoryEntry> = {
       continueCursor: allIdsBeforeCurrentTs[allIdsBeforeCurrentTs.length - 1],
       isDone: false,
       page,
       ...maybeSplit(allIdsSeen, pageSize),
     };
+    return output;
   },
 });
 

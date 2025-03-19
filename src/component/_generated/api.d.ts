@@ -53,6 +53,8 @@ export type Mounts = {
           isDeleted: boolean;
           ts: number;
         }>;
+        pageStatus?: null | "SplitRequired" | "SplitRecommended";
+        splitCursor?: null | string;
       }
     >;
     listHistory: FunctionReference<
@@ -79,6 +81,8 @@ export type Mounts = {
           isDeleted: boolean;
           ts: number;
         }>;
+        pageStatus?: null | "SplitRequired" | "SplitRecommended";
+        splitCursor?: null | string;
       }
     >;
     listSnapshot: FunctionReference<
@@ -106,8 +110,8 @@ export type Mounts = {
           isDeleted: boolean;
           ts: number;
         }>;
-        pageStatus?: "SplitRecommended";
-        splitCursor?: string;
+        pageStatus?: null | "SplitRequired" | "SplitRecommended";
+        splitCursor?: null | string;
       }
     >;
     update: FunctionReference<

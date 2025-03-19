@@ -6,6 +6,8 @@ import { paginationOptsValidator } from "convex/server";
 import { Triggers } from "convex-helpers/server/triggers";
 import { DataModel } from "./_generated/dataModel";
 import { customCtx, customMutation } from "convex-helpers/server/customFunctions";
+import { PaginatedQueryReference } from "convex/react";
+import { api } from "./_generated/api";
 
 const userAuditLog = new TableHistory<DataModel, "users">(components.userAuditLog, {
   serializability: "wallclock",
@@ -64,6 +66,8 @@ export const listDocumentHistory = query({
     return await userAuditLog.listDocumentHistory(ctx, args.id, args.maxTs, args.paginationOpts);
   },
 });
+
+const _typeAssertion: PaginatedQueryReference = api.example.listDocumentHistory;
 
 export const listSnapshot = query({
   args: {
