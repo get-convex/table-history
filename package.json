@@ -18,7 +18,7 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc --project ./esm.json && echo '{\\n  \"type\": \"module\"\\n}' > dist/esm/package.json",
     "build:cjs": "tsc --project ./commonjs.json && echo '{\\n  \"type\": \"commonjs\"\\n}' > dist/commonjs/package.json",
-    "dev": "convex dev --typecheck-components",
+    "dev": "convex dev --live-component-sources",
     "dev:frontend": "cd example && vite",
     "typecheck": "tsc --noEmit",
     "prepare": "npm run build",
@@ -36,48 +36,29 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "@convex-dev/component-source": "./src/client/index.ts",
-        "types": "./dist/esm/client/index.d.ts",
-        "default": "./dist/esm/client/index.js"
-      },
-      "require": {
-        "@convex-dev/component-source": "./src/client/index.ts",
-        "types": "./dist/commonjs/client/index.d.ts",
-        "default": "./dist/commonjs/client/index.js"
-      }
+      "@convex-dev/component-source": "./src/client/index.ts",
+      "types": "./dist/esm/client/index.d.ts",
+      "default": "./dist/esm/client/index.js"
     },
     "./react": {
-      "import": {
-        "@convex-dev/component-source": "./src/react/index.ts",
-        "types": "./dist/esm/react/index.d.ts",
-        "default": "./dist/esm/react/index.js"
-      },
-      "require": {
-        "@convex-dev/component-source": "./src/react/index.ts",
-        "types": "./dist/commonjs/react/index.d.ts",
-        "default": "./dist/commonjs/react/index.js"
-      }
+      "@convex-dev/component-source": "./src/react/index.ts",
+      "types": "./dist/esm/react/index.d.ts",
+      "default": "./dist/esm/react/index.js"
     },
     "./_generated/component.js": {
-      "import": {
-        "types": "./dist/esm/component/_generated/component.d.ts",
-        "default": "./dist/esm/component/_generated/component.js"
-      }
+      "@convex-dev/component-source": "./src/component/_generated/component.ts",
+      "types": "./dist/esm/component/_generated/component.d.ts",
+      "default": "./dist/esm/component/_generated/component.js"
     },
     "./convex.config": {
-      "import": {
-        "@convex-dev/component-source": "./src/component/convex.config.ts",
-        "types": "./dist/esm/component/convex.config.d.ts",
-        "default": "./dist/esm/component/convex.config.js"
-      }
+      "@convex-dev/component-source": "./src/component/convex.config.ts",
+      "types": "./dist/esm/component/convex.config.d.ts",
+      "default": "./dist/esm/component/convex.config.js"
     },
     "./convex.config.js": {
-      "import": {
-        "@convex-dev/component-source": "./src/component/convex.config.ts",
-        "types": "./dist/esm/component/convex.config.d.ts",
-        "default": "./dist/esm/component/convex.config.js"
-      }
+      "@convex-dev/component-source": "./src/component/convex.config.ts",
+      "types": "./dist/esm/component/convex.config.d.ts",
+      "default": "./dist/esm/component/convex.config.js"
     }
   },
   "dependencies": {
