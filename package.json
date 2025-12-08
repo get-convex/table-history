@@ -18,7 +18,8 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc --project ./esm.json && echo '{\\n  \"type\": \"module\"\\n}' > dist/esm/package.json",
     "build:cjs": "tsc --project ./commonjs.json && echo '{\\n  \"type\": \"commonjs\"\\n}' > dist/commonjs/package.json",
-    "dev": "cd example; npm run dev",
+    "dev": "convex dev --typecheck-components",
+    "dev:frontend": "cd example && vite",
     "typecheck": "tsc --noEmit",
     "prepare": "npm run build",
     "prepack": "node node10stubs.mjs",
@@ -79,24 +80,33 @@
       }
     }
   },
+  "dependencies": {
+    "convex-helpers": "^0.1.100"
+  },
   "peerDependencies": {
-    "convex": "~1.16.5 || ~1.17.0 || ~1.18.0"
+    "convex": ">= 1.18.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "@types/node": "^18.17.0",
     "convex-test": "^0.0.33",
     "eslint": "^9.9.1",
     "globals": "^15.9.0",
     "prettier": "3.2.5",
-    "typescript": "~5.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "5.8.3",
     "typescript-eslint": "^8.4.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "vite": "^5.4.1",
     "vitest": "^2.1.4"
   },
   "main": "./dist/commonjs/client/index.js",
   "types": "./dist/commonjs/client/index.d.ts",
-  "module": "./dist/esm/client/index.js",
-  "dependencies": {
-    "convex-helpers": "^0.1.68-alpha.0"
-  }
+  "module": "./dist/esm/client/index.js"
 }
