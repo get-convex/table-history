@@ -9,15 +9,16 @@ import {
   TableNamesInDataModel,
 } from "convex/server";
 import { GenericId } from "convex/values";
-import { api } from "../component/_generated/api";
-import type { Serializability } from "../component/lib";
+import { api } from "../component/_generated/api.js";
+import type { Serializability } from "../component/lib.js";
+import type { ComponentApi } from "../component/_generated/component.js";
 
 export class TableHistory<DataModel extends GenericDataModel, TableName extends TableNamesInDataModel<DataModel>> {
   public options: {
     serializability: Serializability;
   };
   constructor(
-    public component: UseApi<typeof api>,
+    public component: ComponentApi,
     options?: {
       serializability?: Serializability;
     }
@@ -152,21 +153,3 @@ export type OpaqueIds<T> = T extends GenericId<infer _T>
       : T extends object
         ? { [K in keyof T]: OpaqueIds<T[K]> }
         : T;
-
-export type UseApi<API> = Expand<{
-  [mod in keyof API]: API[mod] extends FunctionReference<
-    infer FType,
-    "public",
-    infer FArgs,
-    infer FReturnType,
-    infer FComponentPath
-  >
-    ? FunctionReference<
-        FType,
-        "internal",
-        OpaqueIds<FArgs>,
-        OpaqueIds<FReturnType>,
-        FComponentPath
-      >
-    : UseApi<API[mod]>;
-}>;

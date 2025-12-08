@@ -58,7 +58,20 @@
         "default": "./dist/commonjs/react/index.js"
       }
     },
+    "./_generated/component.js": {
+      "import": {
+        "types": "./dist/esm/component/_generated/component.d.ts",
+        "default": "./dist/esm/component/_generated/component.js"
+      }
+    },
     "./convex.config": {
+      "import": {
+        "@convex-dev/component-source": "./src/component/convex.config.ts",
+        "types": "./dist/esm/component/convex.config.d.ts",
+        "default": "./dist/esm/component/convex.config.js"
+      }
+    },
+    "./convex.config.js": {
       "import": {
         "@convex-dev/component-source": "./src/component/convex.config.ts",
         "types": "./dist/esm/component/convex.config.d.ts",
