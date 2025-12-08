@@ -1,7 +1,5 @@
 import {
   DocumentByName,
-  Expand,
-  FunctionReference,
   GenericDataModel,
   GenericMutationCtx,
   GenericQueryCtx,
@@ -9,11 +7,13 @@ import {
   TableNamesInDataModel,
 } from "convex/server";
 import { GenericId } from "convex/values";
-import { api } from "../component/_generated/api.js";
 import type { Serializability } from "../component/lib.js";
 import type { ComponentApi } from "../component/_generated/component.js";
 
-export class TableHistory<DataModel extends GenericDataModel, TableName extends TableNamesInDataModel<DataModel>> {
+export class TableHistory<
+  DataModel extends GenericDataModel,
+  TableName extends TableNamesInDataModel<DataModel>,
+> {
   public options: {
     serializability: Serializability;
   };
@@ -30,7 +30,7 @@ export class TableHistory<DataModel extends GenericDataModel, TableName extends 
 
   /**
    * Write a new history entry.
-   * 
+   *
    * @argument attribution an arbitrary object that will be stored with the
    *   history entry. Attribution can include actor/user identity, reason for
    *   change, etc.
@@ -39,7 +39,7 @@ export class TableHistory<DataModel extends GenericDataModel, TableName extends 
     ctx: RunMutationCtx,
     id: GenericId<TableName>,
     doc: DocumentByName<DataModel, TableName> | null,
-    attribution: unknown = null,
+    attribution: unknown = null
   ) {
     return ctx.runMutation(this.component.lib.update, {
       id,
@@ -51,38 +51,63 @@ export class TableHistory<DataModel extends GenericDataModel, TableName extends 
 
   /**
    * Paginate the history of the table, from newest to oldest.
-   * 
+   *
    * @argument maxTs To keep pages contiguous, set `maxTs` to a fixed timestamp
    *   (milliseconds since epoch, like Date.now()) and keep
    *   it the same for subsequent pages.
    */
-  async listHistory(ctx: RunQueryCtx, maxTs: number, paginationOpts: PaginationOptions) {
-    return ctx.runQuery(this.component.lib.listHistory, { maxTs, paginationOpts });
+  async listHistory(
+    ctx: RunQueryCtx,
+    maxTs: number,
+    paginationOpts: PaginationOptions
+  ) {
+    return ctx.runQuery(this.component.lib.listHistory, {
+      maxTs,
+      paginationOpts,
+    });
   }
   /**
    * Paginate the history of a single document, from newest to oldest.
-   * 
+   *
    * @argument maxTs To keep pages contiguous, set `maxTs` to a fixed timestamp
    *   (milliseconds since epoch, like Date.now()) and keep
    *   it the same for subsequent pages.
    */
-  async listDocumentHistory(ctx: RunQueryCtx, id: GenericId<TableName>, maxTs: number, paginationOpts: PaginationOptions) {
-    return ctx.runQuery(this.component.lib.listDocumentHistory, { id, maxTs, paginationOpts });
+  async listDocumentHistory(
+    ctx: RunQueryCtx,
+    id: GenericId<TableName>,
+    maxTs: number,
+    paginationOpts: PaginationOptions
+  ) {
+    return ctx.runQuery(this.component.lib.listDocumentHistory, {
+      id,
+      maxTs,
+      paginationOpts,
+    });
   }
   /**
    * Paginate a snapshot of the table at a fixed timestamp.
-   * 
+   *
    * @argument ts the snapshot at which you want to list the table (milliseconds since epoch)
    * @argument currentTs a fixed recent timestamp (milliseconds since epoch, like Date.now())
    *   which should be the same for subsequent pages.
    */
-  async listSnapshot(ctx: RunQueryCtx, snapshotTs: number, currentTs: number, paginationOpts: PaginationOptions) {
-    return ctx.runQuery(this.component.lib.listSnapshot, { snapshotTs, currentTs, paginationOpts });
+  async listSnapshot(
+    ctx: RunQueryCtx,
+    snapshotTs: number,
+    currentTs: number,
+    paginationOpts: PaginationOptions
+  ) {
+    return ctx.runQuery(this.component.lib.listSnapshot, {
+      snapshotTs,
+      currentTs,
+      paginationOpts,
+    });
   }
 
   /**
    * Delete old history entries.
-   * 
+   *
    * @argument minTsToKeep the timestamp (milliseconds since epoch) of the oldest
    *   snapshot of history that should be kept.
    */
@@ -96,8 +121,12 @@ export class TableHistory<DataModel extends GenericDataModel, TableName extends 
   trigger<Ctx extends RunMutationCtx>(): Trigger<Ctx, DataModel, TableName> {
     return async (ctx, change) => {
       let attribution: unknown = null;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((ctx as any).auth && typeof (ctx as any).auth.getUserIdentity === "function") {
+      if (
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (ctx as any).auth &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        typeof (ctx as any).auth.getUserIdentity === "function"
+      ) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         attribution = await (ctx as any).auth.getUserIdentity();
       }
@@ -143,13 +172,3 @@ type RunQueryCtx = {
 type RunMutationCtx = {
   runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
 };
-
-export type OpaqueIds<T> = T extends GenericId<infer _T>
-  ? string
-  : T extends (infer U)[]
-    ? OpaqueIds<U>[]
-    : T extends ArrayBuffer
-      ? ArrayBuffer
-      : T extends object
-        ? { [K in keyof T]: OpaqueIds<T[K]> }
-        : T;
