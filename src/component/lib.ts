@@ -323,14 +323,15 @@ export const vacuumHistoryRecursive = internalMutation({
         minTsToKeep: maxTs,
       });
     }
-    if (!toDelete.isDone) {
-      await ctx.scheduler.runAfter(0, internal.lib.vacuumHistoryRecursive, {
-        minTsToKeep: args.minTsToKeep,
-        paginationOpts: {
-          numItems: args.paginationOpts.numItems,
-          cursor: toDelete.continueCursor,
-        }
-      });
+    if (toDelete.isDone) {
+      return;
     }
+    await ctx.scheduler.runAfter(0, internal.lib.vacuumHistoryRecursive, {
+      minTsToKeep: args.minTsToKeep,
+      paginationOpts: {
+        numItems: args.paginationOpts.numItems,
+        cursor: toDelete.continueCursor,
+      }
+    });
   },
 });
