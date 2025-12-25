@@ -140,7 +140,19 @@ describe("table-history", () => {
     await t.mutation(api.lib.update, { id: "2", doc: null, serializability, attribution: "test" });
     const minTsToKeep = await t.mutation(api.lib.update, { id: "3", doc: { name: "shoes", count: 2 }, serializability, attribution: "test" });
     await t.mutation(api.lib.vacuumHistory, { minTsToKeep });
-    await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+    let callbacks = 0;
+    const maxCallbacks = 5;
+    await t.finishAllScheduledFunctions(() => {
+      callbacks++;
+      if (callbacks > maxCallbacks) {
+        throw new Error(`Too many callbacks - possible infinite loop`);
+      }
+      vi.runAllTimers();
+    });
+
+    const iterations = callbacks - 1; // subtract final "queue empty" check
+    expect(iterations).toEqual(1);
 
     const history = await t.query(api.lib.listHistory, {
       maxTs: minTsToKeep,
@@ -149,6 +161,124 @@ describe("table-history", () => {
     expect(history.page.length).toEqual(2);
     expect(history.page[0].doc).toEqual({ name: "shoes", count: 2 });
     expect(history.page[1].doc).toEqual({ name: "beans", count: 5 });
+
+    vi.useRealTimers();
+  });
+
+  test("vacuum empty table", async () => {
+    vi.useFakeTimers();
+
+    const t = convexTest(schema, modules);
+
+    // Vacuum on empty table should terminate immediately
+    const minTsToKeep = Date.now();
+    await t.mutation(api.lib.vacuumHistory, { minTsToKeep });
+
+    let callbacks = 0;
+    const maxCallbacks = 5;
+    await t.finishAllScheduledFunctions(() => {
+      callbacks++;
+      if (callbacks > maxCallbacks) {
+        throw new Error(`Too many callbacks - possible infinite loop`);
+      }
+      vi.runAllTimers();
+    });
+
+    const iterations = callbacks - 1; // subtract final "queue empty" check
+    expect(iterations).toEqual(1);
+
+    vi.useRealTimers();
+  });
+
+  test("vacuum with gap", async () => {
+    vi.useFakeTimers();
+
+    const t = convexTest(schema, modules);
+    const serializability: Serializability = "table";
+
+    // Create entries, then vacuum with a minTsToKeep beyond the last entry
+    // This is the common case: calling vacuum({ minTsToKeep: Date.now() }) when entries are older
+    await t.mutation(api.lib.update, { id: "1", doc: { name: "beans", count: 10 }, serializability, attribution: "test" });
+    const lastEntryTs = await t.mutation(api.lib.update, { id: "2", doc: { name: "socks", count: 1 }, serializability, attribution: "test" });
+
+    // Vacuum with minTsToKeep > lastEntryTs creates a gap
+    const minTsToKeep = lastEntryTs + 10000;
+    await t.mutation(api.lib.vacuumHistory, { minTsToKeep });
+
+    let callbacks = 0;
+    const maxCallbacks = 5;
+    await t.finishAllScheduledFunctions(() => {
+      callbacks++;
+      if (callbacks > maxCallbacks) {
+        throw new Error(`Too many callbacks - possible infinite loop`);
+      }
+      vi.runAllTimers();
+    });
+
+    const iterations = callbacks - 1; // subtract final "queue empty" check
+    expect(iterations).toEqual(1);
+
+    vi.useRealTimers();
+  });
+
+  test("vacuum with pagination", async () => {
+    vi.useFakeTimers();
+
+    const t = convexTest(schema, modules);
+    const serializability: Serializability = "table";
+    const pageSize = 100; // matches vacuumHistory's numItems
+    const numEntries = 250;
+
+    let minTsToKeep = 0;
+    for (let i = 0; i < numEntries; i++) {
+      minTsToKeep = await t.mutation(api.lib.update, { id: `doc-${i}`, doc: { value: i }, serializability, attribution: "test" });
+    }
+
+    await t.mutation(api.lib.vacuumHistory, { minTsToKeep });
+
+    let callbacks = 0;
+    const maxCallbacks = 10;
+    await t.finishAllScheduledFunctions(() => {
+      callbacks++;
+      if (callbacks > maxCallbacks) {
+        throw new Error(`Too many callbacks - possible infinite loop`);
+      }
+      vi.runAllTimers();
+    });
+
+    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const expectedIterations = Math.ceil(numEntries / pageSize);
+    expect(iterations).toEqual(expectedIterations);
+
+    vi.useRealTimers();
+  });
+
+  test("vacuum with no entries in range", async () => {
+    vi.useFakeTimers();
+
+    const t = convexTest(schema, modules);
+    const serializability: Serializability = "table";
+
+    // Create entries with timestamps, then vacuum with minTsToKeep before all entries
+    const firstEntryTs = await t.mutation(api.lib.update, { id: "1", doc: { name: "beans", count: 10 }, serializability, attribution: "test" });
+    await t.mutation(api.lib.update, { id: "2", doc: { name: "socks", count: 1 }, serializability, attribution: "test" });
+
+    // Vacuum with minTsToKeep before any entries exist
+    const minTsToKeep = firstEntryTs - 1;
+    await t.mutation(api.lib.vacuumHistory, { minTsToKeep });
+
+    let callbacks = 0;
+    const maxCallbacks = 5;
+    await t.finishAllScheduledFunctions(() => {
+      callbacks++;
+      if (callbacks > maxCallbacks) {
+        throw new Error(`Too many callbacks - possible infinite loop`);
+      }
+      vi.runAllTimers();
+    });
+
+    const iterations = callbacks - 1; // subtract final "queue empty" check
+    expect(iterations).toEqual(1);
 
     vi.useRealTimers();
   });
