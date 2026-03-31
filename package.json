@@ -1,5 +1,5 @@
 {
-  "name": "convex-table-history",
+  "name": "@convex-dev/table-history",
   "description": "A table history component for Convex.",
   "repository": "github:get-convex/table-history",
   "homepage": "https://github.com/get-convex/table-history#readme",

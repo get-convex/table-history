@@ -1,8 +1,10 @@
 # Convex TableHistory Component
 
-[![npm version](https://badge.fury.io/js/convex-table-history.svg)](https://badge.fury.io/js/convex-table-history)
+[![npm version](https://badge.fury.io/js/%40convex-dev%2Ftable-history.svg)](https://badge.fury.io/js/%40convex-dev%2Ftable-history)
 
 <!-- START: Include on https://convex.dev/components -->
+
+Note: this Component is currently BETA. It was previously published under `convex-table-history`.
 
 ## History on a Convex table
 
@@ -40,7 +42,7 @@ Run `npm create convex` or follow any of the [quickstarts](https://docs.convex.d
 Install the component package:
 
 ```ts
-npm install convex-table-history
+npm install @convex-dev/table-history
 ```
 
 Create a `convex.config.ts` file in your app's `convex/` folder and install the component by calling `use`:
@@ -48,7 +50,7 @@ Create a `convex.config.ts` file in your app's `convex/` folder and install the 
 ```ts
 // convex/convex.config.ts
 import { defineApp } from "convex/server";
-import tableHistory from "convex-table-history/convex.config";
+import tableHistory from "@convex-dev/table-history/convex.config";
 
 const app = defineApp();
 app.use(tableHistory, { name: "documentAuditLog" });
@@ -64,7 +66,7 @@ different names. They will be available in your app as
 
 ```ts
 import { components } from "./_generated/api";
-import { TableHistory } from "convex-table-history";
+import { TableHistory } from "@convex-dev/table-history";
 
 const documentAuditLog = new TableHistory<DataModel, "documents">(components.documentAuditLog);
 ```
