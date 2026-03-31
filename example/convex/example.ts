@@ -1,17 +1,23 @@
 import { query, mutation as rawMutation } from "./_generated/server";
 import { components } from "./_generated/api";
-import { TableHistory } from "convex-table-history";
+import { TableHistory } from "@convex-dev/table-history";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { Triggers } from "convex-helpers/server/triggers";
 import { DataModel } from "./_generated/dataModel";
-import { customCtx, customMutation } from "convex-helpers/server/customFunctions";
+import {
+  customCtx,
+  customMutation,
+} from "convex-helpers/server/customFunctions";
 import { PaginatedQueryReference } from "convex/react";
 import { api } from "./_generated/api";
 
-const userAuditLog = new TableHistory<DataModel, "users">(components.userAuditLog, {
-  serializability: "wallclock",
-});
+const userAuditLog = new TableHistory<DataModel, "users">(
+  components.userAuditLog,
+  {
+    serializability: "wallclock",
+  }
+);
 
 const triggers = new Triggers<DataModel>();
 triggers.register("users", userAuditLog.trigger());
@@ -63,7 +69,12 @@ export const listDocumentHistory = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    return await userAuditLog.listDocumentHistory(ctx, args.id, args.maxTs, args.paginationOpts);
+    return await userAuditLog.listDocumentHistory(
+      ctx,
+      args.id,
+      args.maxTs,
+      args.paginationOpts
+    );
   },
 });
 
@@ -76,6 +87,11 @@ export const listSnapshot = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    return await userAuditLog.listSnapshot(ctx, args.snapshotTs, args.currentTs, args.paginationOpts);
+    return await userAuditLog.listSnapshot(
+      ctx,
+      args.snapshotTs,
+      args.currentTs,
+      args.paginationOpts
+    );
   },
 });
