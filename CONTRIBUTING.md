@@ -4,8 +4,6 @@
 
 ```sh
 npm i
-cd example
-npm i
 npx convex dev
 ```
 
