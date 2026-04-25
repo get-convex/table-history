@@ -44,7 +44,7 @@ export const updateProfile = mutation({
         email: args.email,
       });
     } else {
-      await ctx.db.patch(user._id, {
+      await ctx.db.patch("users", user._id, {
         name: args.name,
         email: args.email,
       });

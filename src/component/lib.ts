@@ -307,10 +307,10 @@ export const vacuumHistoryRecursive = internalMutation({
     for (const h of toDelete.page) {
       const prevRev = await ctx.db.query("history").withIndex("id", (q) => q.eq("id", h.id).lt("ts", h.ts)).order("desc").first();
       if (prevRev !== null) {
-        await ctx.db.delete(prevRev._id);
+        await ctx.db.delete("history", prevRev._id);
       }
       if (h.isDeleted) {
-        await ctx.db.delete(h._id);
+        await ctx.db.delete("history", h._id);
       }
       maxTs = Math.max(maxTs, h.ts);
     }
@@ -319,7 +319,7 @@ export const vacuumHistoryRecursive = internalMutation({
         minTsToKeep: maxTs,
       });
     } else {
-      await ctx.db.patch(vacuumed._id, {
+      await ctx.db.patch("vacuumed", vacuumed._id, {
         minTsToKeep: maxTs,
       });
     }
