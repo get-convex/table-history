@@ -73,7 +73,7 @@
     "@types/node": "20.19.37",
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
-    "@vitejs/plugin-react": "4.7.0",
+    "@vitejs/plugin-react": "6.0.2",
     "chokidar-cli": "3.0.0",
     "convex": "1.35.1",
     "convex-test": "0.0.33",
