@@ -1,5 +1,6 @@
 import {
   DocumentByName,
+  GenericActionCtx,
   GenericDataModel,
   GenericMutationCtx,
   GenericQueryCtx,
@@ -36,7 +37,7 @@ export class TableHistory<
    *   change, etc.
    */
   async update(
-    ctx: RunMutationCtx,
+    ctx: MutationCtx | ActionCtx,
     id: GenericId<TableName>,
     doc: DocumentByName<DataModel, TableName> | null,
     attribution: unknown = null
@@ -57,7 +58,7 @@ export class TableHistory<
    *   it the same for subsequent pages.
    */
   async listHistory(
-    ctx: RunQueryCtx,
+    ctx: QueryCtx | MutationCtx | ActionCtx,
     maxTs: number,
     paginationOpts: PaginationOptions
   ) {
@@ -74,7 +75,7 @@ export class TableHistory<
    *   it the same for subsequent pages.
    */
   async listDocumentHistory(
-    ctx: RunQueryCtx,
+    ctx: QueryCtx | MutationCtx | ActionCtx,
     id: GenericId<TableName>,
     maxTs: number,
     paginationOpts: PaginationOptions
@@ -93,7 +94,7 @@ export class TableHistory<
    *   which should be the same for subsequent pages.
    */
   async listSnapshot(
-    ctx: RunQueryCtx,
+    ctx: QueryCtx | MutationCtx | ActionCtx,
     snapshotTs: number,
     currentTs: number,
     paginationOpts: PaginationOptions
@@ -111,14 +112,14 @@ export class TableHistory<
    * @argument minTsToKeep the timestamp (milliseconds since epoch) of the oldest
    *   snapshot of history that should be kept.
    */
-  async vacuumHistory(ctx: RunMutationCtx, minTsToKeep: number) {
+  async vacuumHistory(ctx: MutationCtx | ActionCtx, minTsToKeep: number) {
     return ctx.runMutation(this.component.lib.vacuumHistory, { minTsToKeep });
   }
 
   /**
    * For use with `Triggers` from "convex-helpers/server/triggers".
    */
-  trigger<Ctx extends RunMutationCtx>(): Trigger<Ctx, DataModel, TableName> {
+  trigger<Ctx extends MutationCtx>(): Trigger<Ctx, DataModel, TableName> {
     return async (ctx, change) => {
       let attribution: unknown = null;
       if (
@@ -166,9 +167,12 @@ export type Change<
     }
 );
 
-type RunQueryCtx = {
-  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
-};
-type RunMutationCtx = {
-  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
-};
+type QueryCtx = Pick<GenericQueryCtx<GenericDataModel>, "runQuery">;
+type MutationCtx = Pick<
+  GenericMutationCtx<GenericDataModel>,
+  "runQuery" | "runMutation"
+>;
+type ActionCtx = Pick<
+  GenericActionCtx<GenericDataModel>,
+  "runQuery" | "runMutation" | "runAction"
+>;
