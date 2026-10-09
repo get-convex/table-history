@@ -47,6 +47,7 @@
       "types": "./dist/esm/react/index.d.ts",
       "default": "./dist/esm/react/index.js"
     },
+    "./test": "./src/test.ts",
     "./_generated/component.js": {
       "types": "./dist/esm/component/_generated/component.d.ts",
       "default": "./dist/esm/component/_generated/component.js"
