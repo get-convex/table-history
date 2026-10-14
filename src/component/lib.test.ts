@@ -8,6 +8,18 @@ import { Serializability } from "./lib.js";
 
 const modules = import.meta.glob("./**/*.*s");
 
+// Counts completed vacuumHistoryRecursive runs, which is what each vacuum
+// iteration schedules.
+async function countVacuumRuns(t: ReturnType<typeof convexTest>) {
+  const scheduled = await t.run((ctx) =>
+    ctx.db.system.query("_scheduled_functions").collect(),
+  );
+  return scheduled.filter(
+    (f) =>
+      f.name.includes("vacuumHistoryRecursive") && f.state.kind === "success",
+  ).length;
+}
+
 describe("table-history", () => {
   test("update and list", async () => {
     const t = convexTest(schema, modules);
@@ -151,7 +163,7 @@ describe("table-history", () => {
       vi.runAllTimers();
     });
 
-    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const iterations = await countVacuumRuns(t);
     expect(iterations).toEqual(1);
 
     const history = await t.query(api.lib.listHistory, {
@@ -184,7 +196,7 @@ describe("table-history", () => {
       vi.runAllTimers();
     });
 
-    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const iterations = await countVacuumRuns(t);
     expect(iterations).toEqual(1);
 
     vi.useRealTimers();
@@ -215,7 +227,7 @@ describe("table-history", () => {
       vi.runAllTimers();
     });
 
-    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const iterations = await countVacuumRuns(t);
     expect(iterations).toEqual(1);
 
     vi.useRealTimers();
@@ -246,7 +258,7 @@ describe("table-history", () => {
       vi.runAllTimers();
     });
 
-    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const iterations = await countVacuumRuns(t);
     const expectedIterations = Math.ceil(numEntries / pageSize);
     expect(iterations).toEqual(expectedIterations);
 
@@ -277,7 +289,7 @@ describe("table-history", () => {
       vi.runAllTimers();
     });
 
-    const iterations = callbacks - 1; // subtract final "queue empty" check
+    const iterations = await countVacuumRuns(t);
     expect(iterations).toEqual(1);
 
     vi.useRealTimers();
