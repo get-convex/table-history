@@ -1,7 +1,5 @@
 import { v, Infer, Validator } from "convex/values";
 import { internalMutation, mutation, query, QueryCtx } from "./_generated/server";
-import { paginator } from "convex-helpers/server/pagination";
-import schema from "./schema.js";
 import { paginationOptsValidator } from "convex/server";
 import { Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -103,7 +101,7 @@ export const listHistory = query({
   },
   returns: paginationResultValidator(historyEntryValidator),
   handler: async (ctx, args) => {
-    const results = await paginator(ctx.db, schema)
+    const results = await ctx.db
       .query("history")
       .withIndex("ts", (q) => q.lte("ts", args.maxTs))
       .order("desc")
@@ -133,7 +131,7 @@ export const listDocumentHistory = query({
   },
   returns: paginationResultValidator(historyEntryValidator),
   handler: async (ctx, args) => {
-    const results = await paginator(ctx.db, schema)
+    const results = await ctx.db
       .query("history")
       .withIndex("id", (q) => q.eq("id", args.id).lte("ts", args.maxTs))
       .order("desc")
@@ -298,11 +296,17 @@ export const vacuumHistoryRecursive = internalMutation({
     if (startTs >= args.minTsToKeep) {
       return;
     }
-    const toDelete = await paginator(ctx.db, schema)
+    // Cursors from the previous convex-helpers paginator were JSON arrays.
+    // Restart from the beginning of the range: `startTs` has already advanced
+    // past the entries processed in earlier batches.
+    const cursor = args.paginationOpts.cursor?.startsWith("[")
+      ? null
+      : args.paginationOpts.cursor;
+    const toDelete = await ctx.db
       .query("history")
       .withIndex("ts", (q) => q.gt("ts", startTs).lte("ts", args.minTsToKeep))
       .order("asc")
-      .paginate(args.paginationOpts);
+      .paginate({ ...args.paginationOpts, cursor });
     let maxTs = startTs;
     for (const h of toDelete.page) {
       const prevRev = await ctx.db.query("history").withIndex("id", (q) => q.eq("id", h.id).lt("ts", h.ts)).order("desc").first();
